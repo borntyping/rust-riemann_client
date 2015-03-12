@@ -25,16 +25,21 @@ fn send_event(event: proto::Event) -> proto::Msg {
     let mut msg = proto::Msg::new();
     msg.set_events(protobuf::RepeatedField::from_vec(vec![event]));
 
+    let mut query = proto::Query::new();
+    query.set_string("true".to_string());
+    msg.set_query(query);
+
+    println!("--> {{{:?}}}", msg);
+
     let mut stream = TcpStream::connect("127.0.0.1:5555").unwrap();
     let mut stream = BufStream::new(stream);
 
     {
-        println!("--> {{{:?}}}", msg);
         let mut output_stream = CodedOutputStream::new(&mut stream);
 
         // Riemann expects a big-endian 32 bit unsigned integer describing the
         // size of the message, but the `rust-protobuf` library writes a little-
-        // endian 64 bit unsigned integer. This writes the size 'correctly'.
+        // endian 32 bit unsigned integer. This writes the size 'correctly'.
         //
         // See also:
         //  - `protobuf::Message::write_length_delimited_to`
@@ -43,20 +48,32 @@ fn send_event(event: proto::Event) -> proto::Msg {
         output_stream.write_raw_byte(((size >> 24) & 0xFF) as u8).unwrap();
         output_stream.write_raw_byte(((size >> 16) & 0xFF) as u8).unwrap();
         output_stream.write_raw_byte(((size >>  8) & 0xFF) as u8).unwrap();
-        output_stream.write_raw_byte(((size      ) & 0xFF) as u8).unwrap();
+        output_stream.write_raw_byte(((size >>  0) & 0xFF) as u8).unwrap();
 
         // Encode and write the message using protobuf
         msg.write_to_with_cached_sizes(&mut output_stream).unwrap();
     }
 
+    // Flush the buffered stream's output
     stream.flush().unwrap();
 
-    {
-        let response: self::proto::Msg = protobuf::parse_length_delimited_from(
-            &mut CodedInputStream::new(&mut stream)).unwrap();
-        println!("<-- {{{:?}}}", response);
-        return response;
-    }
+    let response: self::proto::Msg = {
+        let mut input_stream = CodedInputStream::new(&mut stream);
+
+        // Read a big-endian 32 bit unsigned integer describing the size of the
+        // message in bytes.
+        let mut size: u32 = 0;
+        size += (input_stream.read_raw_byte().unwrap() as u32) << 24;
+        size += (input_stream.read_raw_byte().unwrap() as u32) << 16;
+        size += (input_stream.read_raw_byte().unwrap() as u32) <<  8;
+        size += (input_stream.read_raw_byte().unwrap() as u32) <<  0;
+
+        let bytes = input_stream.read_raw_bytes(size).unwrap();
+        protobuf::parse_from_bytes(bytes.as_slice()).unwrap()
+    };
+
+    println!("<-- {{{:?}}}", response);
+    return response;
 }
 
 pub fn event() {
