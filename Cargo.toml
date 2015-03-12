@@ -1,7 +1,10 @@
 [package]
 name = "riemann_client"
 version = "0.1.0"
+license = "MIT"
 authors = ["Sam Clements <sam@borntyping.co.uk>"]
+description = "A Riemann client library"
+repository = "https://github.com/borntyping/rust-riemann_client"
 
 [dependencies]
 log = "^0.2.5"
