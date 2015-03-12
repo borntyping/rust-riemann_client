@@ -1,7 +1,13 @@
 [package]
 name = "riemann_client"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Sam Clements <sam@borntyping.co.uk>"]
+
+[dependencies]
+log = "^0.2.5"
 
 [dependencies.protobuf]
 git = "https://github.com/stepancheg/rust-protobuf.git"
+
+[dev-dependencies]
+simple_logger = "*"
