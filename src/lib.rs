@@ -4,6 +4,7 @@
 #![feature(io)]
 #![feature(net)]
 
+extern crate libc;
 #[macro_use]
 extern crate log;
 extern crate protobuf;
@@ -20,6 +21,7 @@ use protobuf::error::ProtobufError;
 use self::proto::{Event,Msg,Query};
 
 pub mod proto;
+pub mod utils;
 
 #[derive(Debug)]
 pub enum ClientError {
