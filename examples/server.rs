@@ -1,4 +1,3 @@
-#![feature(io)]
 #![feature(net)]
 #![allow(unused_imports)]
 
