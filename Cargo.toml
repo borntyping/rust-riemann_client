@@ -1,6 +1,6 @@
 [package]
 name = "riemann_client"
-version = "0.2.0"
+version = "0.2.1"
 license = "MIT"
 authors = ["Sam Clements <sam@borntyping.co.uk>"]
 description = "A Riemann client library"

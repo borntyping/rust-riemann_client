@@ -56,7 +56,7 @@ impl Client {
     }
 
     fn send_msg(&mut self, msg: Msg) -> Result<(), ClientError> {
-        debug!("{:?} <-- msg {{{:?}}}", self.addr(), msg);
+        // debug!("{:?} <-- msg {{{:?}}}", self.addr(), msg);
 
         {
             let mut output_stream = CodedOutputStream::new(&mut self.stream);
@@ -99,7 +99,7 @@ impl Client {
             try!(protobuf::parse_from_bytes(bytes.as_slice()))
         };
 
-        debug!("{:?} --> msg {{{:?}}}", self.addr(), msg);
+        // debug!("{:?} --> msg {{{:?}}}", self.addr(), msg);
         return Ok(msg);
     }
 
