@@ -1,4 +1,3 @@
-#![feature(net)]
 #![allow(unused_imports)]
 
 extern crate protobuf;

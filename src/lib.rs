@@ -1,8 +1,6 @@
 //! A [Riemann](http://riemann.io/) client library
 
 #![feature(core)]
-#![feature(io)]
-#![feature(net)]
 
 extern crate libc;
 #[macro_use]
@@ -56,11 +54,9 @@ impl Client {
     }
 
     fn send_msg(&mut self, msg: Msg) -> Result<(), ClientError> {
-        // debug!("{:?} <-- msg {{{:?}}}", self.addr(), msg);
+        debug!("<-- msg {{{:?}}}", msg);
 
         {
-            let mut output_stream = CodedOutputStream::new(&mut self.stream);
-
             // Riemann expects a big-endian 32 bit unsigned integer describing
             // the size of the message, but the `rust-protobuf` library writes a
             // little-endian 32 bit unsigned integer.
@@ -68,17 +64,21 @@ impl Client {
             // See also:
             //  - `protobuf::Message::write_length_delimited_to`
             //  - `protobuf::CodedOutputStream::write_raw_varint32`
-            let size = msg.compute_size();
-            try!(output_stream.write_raw_byte(((size >> 24) & 0xFF) as u8));
-            try!(output_stream.write_raw_byte(((size >> 16) & 0xFF) as u8));
-            try!(output_stream.write_raw_byte(((size >>  8) & 0xFF) as u8));
-            try!(output_stream.write_raw_byte(((size >>  0) & 0xFF) as u8));
+            let mut size = msg.compute_size();
 
-            // Encode and write the message using protobuf
-            try!(msg.write_to_with_cached_sizes(&mut output_stream));
+            try!(self.stream.write_all(&[((size >> 24) & 0xFF) as u8]));
+            try!(self.stream.write_all(&[((size >> 16) & 0xFF) as u8]));
+            try!(self.stream.write_all(&[((size >>  8) & 0xFF) as u8]));
+            try!(self.stream.write_all(&[((size >>  0) & 0xFF) as u8]));
+
+            let bytes = try!(msg.write_to_bytes());
+            warn!("reported size: {}, actual size: {}, bytes: {:?}",
+                size, bytes.len(), bytes);
+
+            try!(self.stream.write_all(bytes.as_slice()));
+            try!(self.stream.flush());
         }
 
-        try!(self.stream.flush());
         return Ok(());
     }
 
@@ -99,7 +99,7 @@ impl Client {
             try!(protobuf::parse_from_bytes(bytes.as_slice()))
         };
 
-        // debug!("{:?} --> msg {{{:?}}}", self.addr(), msg);
+        debug!("--> msg {{{:?}}}", msg);
         return Ok(msg);
     }
 
