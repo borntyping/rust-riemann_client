@@ -13,7 +13,7 @@ use std::io::Error as IoError;
 use std::net::{TcpStream,ToSocketAddrs};
 use std::net::SocketAddr;
 
-use protobuf::{Message,CodedOutputStream,CodedInputStream};
+use protobuf::{Message,CodedInputStream};
 use protobuf::error::ProtobufError;
 
 use self::proto::{Event,Msg,Query};
@@ -54,52 +54,40 @@ impl Client {
     }
 
     fn send_msg(&mut self, msg: Msg) -> Result<(), ClientError> {
-        debug!("<-- msg {{{:?}}}", msg);
+        let size = msg.compute_size();
+        let bytes = try!(msg.write_to_bytes());
 
-        {
-            // Riemann expects a big-endian 32 bit unsigned integer describing
-            // the size of the message, but the `rust-protobuf` library writes a
-            // little-endian 32 bit unsigned integer.
-            //
-            // See also:
-            //  - `protobuf::Message::write_length_delimited_to`
-            //  - `protobuf::CodedOutputStream::write_raw_varint32`
-            let mut size = msg.compute_size();
+        assert!(size == bytes.len() as u32,
+            "Message computed size ({}) and encoded length ({}) do not \
+             match, you are going to have a bad day.", size, bytes.len());
 
-            try!(self.stream.write_all(&[((size >> 24) & 0xFF) as u8]));
-            try!(self.stream.write_all(&[((size >> 16) & 0xFF) as u8]));
-            try!(self.stream.write_all(&[((size >>  8) & 0xFF) as u8]));
-            try!(self.stream.write_all(&[((size >>  0) & 0xFF) as u8]));
+        // Write the message size as a big-endian unsigned integer.
+        try!(self.stream.write_all(&[((size >> 24) & 0xFF) as u8]));
+        try!(self.stream.write_all(&[((size >> 16) & 0xFF) as u8]));
+        try!(self.stream.write_all(&[((size >>  8) & 0xFF) as u8]));
+        try!(self.stream.write_all(&[((size >>  0) & 0xFF) as u8]));
 
-            let bytes = try!(msg.write_to_bytes());
-            warn!("reported size: {}, actual size: {}, bytes: {:?}",
-                size, bytes.len(), bytes);
-
-            try!(self.stream.write_all(bytes.as_slice()));
-            try!(self.stream.flush());
-        }
+        // Write the rest of the message.
+        try!(self.stream.write_all(bytes.as_slice()));
+        try!(self.stream.flush());
 
         return Ok(());
     }
 
     fn recv_msg(&mut self) -> Result<Msg, ClientError> {
-        let msg = {
-            let mut input_stream = CodedInputStream::new(&mut self.stream);
+        let mut input_stream = CodedInputStream::new(&mut self.stream);
 
-            // Read a big-endian 32 bit unsigned integer describing the size of the
-            // message in bytes. Further explanation the comments in `send_msg`.
-            let mut size: u32 = 0;
-            size += (try!(input_stream.read_raw_byte()) as u32) << 24;
-            size += (try!(input_stream.read_raw_byte()) as u32) << 16;
-            size += (try!(input_stream.read_raw_byte()) as u32) <<  8;
-            size += (try!(input_stream.read_raw_byte()) as u32) <<  0;
+        // Read the message size as a big-endian 32 bit unsigned integer.
+        let mut size: u32 = 0;
+        size += (try!(input_stream.read_raw_byte()) as u32) << 24;
+        size += (try!(input_stream.read_raw_byte()) as u32) << 16;
+        size += (try!(input_stream.read_raw_byte()) as u32) <<  8;
+        size += (try!(input_stream.read_raw_byte()) as u32) <<  0;
 
-            // Read the expected bytes and parse them as a message
-            let bytes = try!(input_stream.read_raw_bytes(size));
-            try!(protobuf::parse_from_bytes(bytes.as_slice()))
-        };
+        // Read the expected bytes and parse them as a message.
+        let bytes = try!(input_stream.read_raw_bytes(size));
+        let msg = try!(protobuf::parse_from_bytes(bytes.as_slice()));
 
-        debug!("--> msg {{{:?}}}", msg);
         return Ok(msg);
     }
 
