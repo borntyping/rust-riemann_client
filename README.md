@@ -11,6 +11,13 @@ Usage
 
 See the usage examples in `./examples`.
 
+Development
+-----------
+
+The protocol buffer defintion can be updated by replacing `src/proto/mod.proto` with the [latest defintion from the Riemann source](https://raw.githubusercontent.com/aphyr/riemann-java-client/master/src/main/proto/riemann/proto.proto) and running `make`.
+
+You will need to have `protoc` and `protoc-gen-rust` installed. `protoc` is provided by the `protobuf-compiler` package on Debian based systems. Instructions for installing `protoc-gen-rust` this are availible in the [README for rust-protobuf](https://github.com/stepancheg/rust-protobuf).
+
 Licence
 -------
 
