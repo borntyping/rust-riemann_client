@@ -11,7 +11,6 @@ use std::error::FromError;
 use std::io::{BufStream,Write};
 use std::io::Error as IoError;
 use std::net::{TcpStream,ToSocketAddrs};
-use std::net::SocketAddr;
 
 use protobuf::{Message,CodedInputStream};
 use protobuf::error::ProtobufError;
