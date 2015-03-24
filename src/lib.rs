@@ -48,11 +48,6 @@ impl Client {
         Ok(Client { stream: BufStream::new(try!(TcpStream::connect(addr))) })
     }
 
-    /// This function might panic, but probably will not
-    fn addr(&self) -> SocketAddr {
-        self.stream.get_ref().peer_addr().unwrap()
-    }
-
     fn send_msg(&mut self, msg: Msg) -> Result<(), ClientError> {
         let size = msg.compute_size();
         let bytes = try!(msg.write_to_bytes());
@@ -111,6 +106,6 @@ impl Client {
 
 impl std::fmt::Debug for Client {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Client {{ addr: {:?} }}", self.addr())
+        write!(f, "Client {{ addr: {:?} }}", self.stream.get_ref().peer_addr())
     }
 }
