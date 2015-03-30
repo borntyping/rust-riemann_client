@@ -62,7 +62,7 @@ impl Client {
         try!(self.stream.write_all(&[((size >>  0) & 0xFF) as u8]));
 
         // Write the rest of the message.
-        try!(self.stream.write_all(bytes.as_slice()));
+        try!(self.stream.write_all(&bytes));
         try!(self.stream.flush());
 
         return Ok(());
@@ -80,7 +80,7 @@ impl Client {
 
         // Read the expected bytes and parse them as a message.
         let bytes = try!(input_stream.read_raw_bytes(size));
-        let msg = try!(protobuf::parse_from_bytes(bytes.as_slice()));
+        let msg = try!(protobuf::parse_from_bytes(&bytes));
 
         return Ok(msg);
     }
