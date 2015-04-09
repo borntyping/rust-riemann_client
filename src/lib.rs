@@ -1,13 +1,10 @@
 //! A [Riemann](http://riemann.io/) client library
 
-#![feature(core)]
-
 extern crate libc;
 #[macro_use]
 extern crate log;
 extern crate protobuf;
 
-use std::error::FromError;
 use std::io::{BufStream,Write};
 use std::io::Error as IoError;
 use std::net::{TcpStream,ToSocketAddrs};
@@ -26,14 +23,14 @@ pub enum ClientError {
     ProtoBuf(ProtobufError)
 }
 
-impl FromError<IoError> for ClientError {
-    fn from_error(err: IoError) -> Self {
+impl From<IoError> for ClientError {
+    fn from(err: IoError) -> Self {
         ClientError::Io(err)
     }
 }
 
-impl FromError<ProtobufError> for ClientError {
-    fn from_error(err: ProtobufError) -> Self {
+impl From<ProtobufError> for ClientError {
+    fn from(err: ProtobufError) -> Self {
         ClientError::ProtoBuf(err)
     }
 }
