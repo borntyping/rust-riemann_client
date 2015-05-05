@@ -427,6 +427,10 @@ impl ::protobuf::Message for State {
         ::std::any::TypeId::of::<State>()
     }
 
+    fn as_any(&self) -> &::std::any::Any {
+        self as &::std::any::Any
+    }
+
     fn descriptor(&self) -> &'static ::protobuf::reflect::MessageDescriptor {
         ::protobuf::MessageStatic::descriptor_static(None::<Self>)
     }
@@ -1054,6 +1058,10 @@ impl ::protobuf::Message for Event {
         ::std::any::TypeId::of::<Event>()
     }
 
+    fn as_any(&self) -> &::std::any::Any {
+        self as &::std::any::Any
+    }
+
     fn descriptor(&self) -> &'static ::protobuf::reflect::MessageDescriptor {
         ::protobuf::MessageStatic::descriptor_static(None::<Self>)
     }
@@ -1301,6 +1309,10 @@ impl ::protobuf::Message for Query {
 
     fn type_id(&self) -> ::std::any::TypeId {
         ::std::any::TypeId::of::<Query>()
+    }
+
+    fn as_any(&self) -> &::std::any::Any {
+        self as &::std::any::Any
     }
 
     fn descriptor(&self) -> &'static ::protobuf::reflect::MessageDescriptor {
@@ -1647,6 +1659,10 @@ impl ::protobuf::Message for Msg {
         ::std::any::TypeId::of::<Msg>()
     }
 
+    fn as_any(&self) -> &::std::any::Any {
+        self as &::std::any::Any
+    }
+
     fn descriptor(&self) -> &'static ::protobuf::reflect::MessageDescriptor {
         ::protobuf::MessageStatic::descriptor_static(None::<Self>)
     }
@@ -1906,6 +1922,10 @@ impl ::protobuf::Message for Attribute {
 
     fn type_id(&self) -> ::std::any::TypeId {
         ::std::any::TypeId::of::<Attribute>()
+    }
+
+    fn as_any(&self) -> &::std::any::Any {
+        self as &::std::any::Any
     }
 
     fn descriptor(&self) -> &'static ::protobuf::reflect::MessageDescriptor {

@@ -9,10 +9,8 @@ repository = "https://github.com/borntyping/rust-riemann_client"
 [dependencies]
 log = "^0.3.1"
 libc = "^0.1.6"
+protobuf = "^0.0.10"
 
-[dependencies.protobuf]
-git = "https://github.com/stepancheg/rust-protobuf.git"
-version = "^0.0.9"
-
-[dev-dependencies]
+[dev-dependencies.simple_logger]
+git = "https://github.com/borntyping/rust-simple_logger.git"
 simple_logger = "^0.3.1"
