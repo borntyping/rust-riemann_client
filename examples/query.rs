@@ -1,7 +1,5 @@
 //! Prints all events from the index
 
-#![feature(collections)]
-
 extern crate riemann_client;
 
 fn main() {
@@ -14,13 +12,17 @@ fn main() {
 
     // Create a sorted list of events
     let mut events = Vec::new();
-    events.push_all(response.get_events());
+    events.extend(response.get_events());
     events.sort_by(|a, b| {
         a.get_service().cmp(b.get_service())
     });
 
+    println!(
+        "{:<10} {:<10} {:<55} {:<10} {:<10}",
+        "HOSTNAME", "TIME", "SERVICE", "METRIC", "STATE");
+
     for event in events {
-        println!("{} - {} - {:<55} {:<10} {:<10}",
+        println!("{:<10} {:<10} {:<55} {:<10} {:<10}",
             event.get_host(),
             event.get_time(),
             event.get_service(),

@@ -5,8 +5,7 @@ extern crate libc;
 extern crate log;
 extern crate protobuf;
 
-use std::io::{BufStream,Write};
-use std::io::Error as IoError;
+use std::io::Write;
 use std::net::{TcpStream,ToSocketAddrs};
 
 use protobuf::{Message,CodedInputStream};
@@ -19,12 +18,12 @@ pub mod utils;
 
 #[derive(Debug)]
 pub enum ClientError {
-    Io(IoError),
+    Io(::std::io::Error),
     ProtoBuf(ProtobufError)
 }
 
-impl From<IoError> for ClientError {
-    fn from(err: IoError) -> Self {
+impl From<::std::io::Error> for ClientError {
+    fn from(err: ::std::io::Error) -> Self {
         ClientError::Io(err)
     }
 }
@@ -36,12 +35,12 @@ impl From<ProtobufError> for ClientError {
 }
 
 pub struct Client {
-    stream: BufStream<TcpStream>
+    stream: TcpStream
 }
 
 impl Client {
     pub fn connect<A: ToSocketAddrs + ?Sized>(addr: &A) -> Result<Self, ClientError> {
-        Ok(Client { stream: BufStream::new(try!(TcpStream::connect(addr))) })
+        Ok(Client { stream: try!(TcpStream::connect(addr)) })
     }
 
     fn send_msg(&mut self, msg: Msg) -> Result<(), ClientError> {
@@ -102,6 +101,6 @@ impl Client {
 
 impl std::fmt::Debug for Client {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Client {{ addr: {:?} }}", self.stream.get_ref().peer_addr())
+        write!(f, "Client {{ addr: {:?} }}", self.stream.peer_addr())
     }
 }
