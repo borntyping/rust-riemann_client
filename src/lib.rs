@@ -17,40 +17,42 @@ pub mod proto;
 pub mod utils;
 
 #[derive(Debug)]
-pub enum ClientError {
+pub enum Error {
     Io(::std::io::Error),
-    ProtoBuf(ProtobufError),
-    RiemannError(String)
+    Protobuf(ProtobufError),
+    Riemann(String)
 }
 
-impl From<::std::io::Error> for ClientError {
+impl From<::std::io::Error> for Error {
     fn from(err: ::std::io::Error) -> Self {
-        ClientError::Io(err)
+        Error::Io(err)
     }
 }
 
-impl From<ProtobufError> for ClientError {
+impl From<ProtobufError> for Error {
     fn from(err: ProtobufError) -> Self {
-        ClientError::ProtoBuf(err)
+        Error::Protobuf(err)
     }
 }
 
-impl From<Msg> for ClientError {
+impl From<Msg> for Error {
     fn from(msg: Msg) -> Self {
-        ClientError::RiemannError(msg.get_error().to_string())
+        Error::Riemann(msg.get_error().to_string())
     }
 }
+
+pub type Result<T> = ::std::result::Result<T, Error>;
 
 pub struct Client {
     stream: TcpStream
 }
 
 impl Client {
-    pub fn connect<A: ToSocketAddrs + ?Sized>(addr: &A) -> Result<Self, ClientError> {
+    pub fn connect<A: ToSocketAddrs + ?Sized>(addr: &A) -> Result<Self> {
         Ok(Client { stream: try!(TcpStream::connect(addr)) })
     }
 
-    fn send_msg(&mut self, msg: Msg) -> Result<(), ClientError> {
+    fn send_msg(&mut self, msg: Msg) -> Result<()> {
         let size = msg.compute_size();
         let bytes = try!(msg.write_to_bytes());
 
@@ -71,7 +73,7 @@ impl Client {
         return Ok(());
     }
 
-    fn recv_msg(&mut self) -> Result<Msg, ClientError> {
+    fn recv_msg(&mut self) -> Result<Msg> {
         let mut input_stream = CodedInputStream::new(&mut self.stream);
 
         // Read the message size as a big-endian 32 bit unsigned integer.
@@ -86,21 +88,21 @@ impl Client {
         let msg: Msg = try!(protobuf::parse_from_bytes(&bytes));
 
         // Check that the messages has set `ok: true`
-        if msg.get_ok() { Ok(msg) } else { Err(ClientError::from(msg)) }
+        if msg.get_ok() { Ok(msg) } else { Err(Error::from(msg)) }
     }
 
-    fn send_and_recv_msg(&mut self, msg: Msg) -> Result<Msg, ClientError> {
+    fn send_and_recv_msg(&mut self, msg: Msg) -> Result<Msg> {
         try!(self.send_msg(msg));
         return self.recv_msg();
     }
 
-    pub fn send_event(&mut self, event: Event) -> Result<Msg, ClientError> {
+    pub fn send_event(&mut self, event: Event) -> Result<Msg> {
         let mut msg = proto::Msg::new();
         msg.set_events(protobuf::RepeatedField::from_vec(vec![event]));
         return self.send_and_recv_msg(msg);
     }
 
-    pub fn send_query(&mut self, query: Query) -> Result<Msg, ClientError> {
+    pub fn send_query(&mut self, query: Query) -> Result<Msg> {
         let mut msg = proto::Msg::new();
         msg.set_query(query);
         return self.send_and_recv_msg(msg);
