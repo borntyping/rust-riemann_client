@@ -1,4 +1,4 @@
-# riemann_client [![](https://img.shields.io/github/tag/borntyping/rust-riemann_client.svg)](https://github.com/borntyping/rust-riemann_client/tags) [![](https://img.shields.io/travis/borntyping/rust-riemann_client.svg)](https://travis-ci.org/borntyping/rust-riemann_client) [![](https://img.shields.io/github/issues/borntyping/rust-riemann_client.svg)](https://github.com/borntyping/rust-riemann_client/issues)
+# riemann_client [![crates.io version](https://img.shields.io/crates/v/riemann_client.svg)](https://crates.io/crates/riemann_client) [![crates.io licence](https://img.shields.io/crates/l/riemann_client.svg)](https://crates.io/crates/riemann_client) [![travis.ci build status](https://img.shields.io/travis/borntyping/rust-riemann_client.svg)](https://travis-ci.org/borntyping/rust-riemann_client)
 
 A [Riemann](http://riemann.io/) client library for [Rust](http://www.rust-lang.org/).
 
