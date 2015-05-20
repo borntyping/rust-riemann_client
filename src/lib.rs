@@ -19,7 +19,8 @@ pub mod utils;
 #[derive(Debug)]
 pub enum ClientError {
     Io(::std::io::Error),
-    ProtoBuf(ProtobufError)
+    ProtoBuf(ProtobufError),
+    RiemannError(String)
 }
 
 impl From<::std::io::Error> for ClientError {
@@ -31,6 +32,12 @@ impl From<::std::io::Error> for ClientError {
 impl From<ProtobufError> for ClientError {
     fn from(err: ProtobufError) -> Self {
         ClientError::ProtoBuf(err)
+    }
+}
+
+impl From<Msg> for ClientError {
+    fn from(msg: Msg) -> Self {
+        ClientError::RiemannError(msg.get_error().to_string())
     }
 }
 
@@ -76,9 +83,10 @@ impl Client {
 
         // Read the expected bytes and parse them as a message.
         let bytes = try!(input_stream.read_raw_bytes(size));
-        let msg = try!(protobuf::parse_from_bytes(&bytes));
+        let msg: Msg = try!(protobuf::parse_from_bytes(&bytes));
 
-        return Ok(msg);
+        // Check that the messages has set `ok: true`
+        if msg.get_ok() { Ok(msg) } else { Err(ClientError::from(msg)) }
     }
 
     fn send_and_recv_msg(&mut self, msg: Msg) -> Result<Msg, ClientError> {
