@@ -81,6 +81,17 @@ impl Client {
         msg.set_query(query);
         return self.send_and_recv_msg(msg);
     }
+
+    /// Send a query and return a sorted list of events matching the query
+    pub fn query(&mut self, query: String) -> Result<Vec<Event>> {
+        let mut q = Query::new();
+        q.set_string(query);
+        let response = try!(self.send_query(q));
+
+        let mut events = Vec::from(response.get_events());
+        events.sort_by(|a, b| { a.get_service().cmp(b.get_service()) });
+        Ok(events)
+    }
 }
 
 impl std::fmt::Debug for Client {
