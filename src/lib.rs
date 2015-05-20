@@ -9,39 +9,13 @@ use std::io::Write;
 use std::net::{TcpStream,ToSocketAddrs};
 
 use protobuf::{Message,CodedInputStream};
-use protobuf::error::ProtobufError;
 
+use self::error::{Error,Result};
 use self::proto::{Event,Msg,Query};
 
+mod error;
 pub mod proto;
 pub mod utils;
-
-#[derive(Debug)]
-pub enum Error {
-    Io(::std::io::Error),
-    Protobuf(ProtobufError),
-    Riemann(String)
-}
-
-impl From<::std::io::Error> for Error {
-    fn from(err: ::std::io::Error) -> Self {
-        Error::Io(err)
-    }
-}
-
-impl From<ProtobufError> for Error {
-    fn from(err: ProtobufError) -> Self {
-        Error::Protobuf(err)
-    }
-}
-
-impl From<Msg> for Error {
-    fn from(msg: Msg) -> Self {
-        Error::Riemann(msg.get_error().to_string())
-    }
-}
-
-pub type Result<T> = ::std::result::Result<T, Error>;
 
 pub struct Client {
     stream: TcpStream
