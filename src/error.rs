@@ -1,10 +1,7 @@
 //! Error variants
 
 use std::io::Error as IoError;
-
-use protobuf::error::ProtobufError;
-
-use super::proto::Msg;
+use ::protobuf::error::ProtobufError;
 
 #[derive(Debug)]
 pub enum Error {
@@ -22,12 +19,6 @@ impl From<IoError> for Error {
 impl From<ProtobufError> for Error {
     fn from(err: ProtobufError) -> Self {
         Error::Protobuf(err)
-    }
-}
-
-impl From<Msg> for Error {
-    fn from(msg: Msg) -> Self {
-        Error::Riemann(msg.get_error().to_string())
     }
 }
 
