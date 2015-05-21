@@ -1,6 +1,13 @@
 language: rust
 rust:
-  - stable
-  - beta
-  - nightly
+- stable
+- beta
+- nightly
 sudo: false
+deploy:
+  provider: releases
+  api_key:
+    secure: mwghbw0K6BpgBkxJhhkf6CFIhB4WYwgLZjC4O2MQW/9lknbgT1tEYt4adswLjf3sGeZjvgnwemdVuXFrKP3JDgdb9pVtOGPvUpYAMwUSUjYtE3YX9yEINvPsVKCPfOQhaXAye6q7c00fdkwW+3waHJLNsMnbYw/cD12K8jatsSM=
+  file: target/release/riemann-cli
+  on:
+    repo: borntyping/rust-riemann_client

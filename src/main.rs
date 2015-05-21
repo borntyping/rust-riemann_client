@@ -13,8 +13,7 @@ extern crate rustc_serialize;
 static USAGE: &'static str = "
 Usage: riemann_cli [-HP] send [options]
        riemann_cli [-HP] query <query>
-       riemann_cli -h | --help
-       riemann_cli -v | --version
+       riemann_cli --help | --version
 
 Server options:
     -H, --server-host <host>    Riemann server hostname [default: localhost].
