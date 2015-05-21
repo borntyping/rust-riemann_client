@@ -8,6 +8,7 @@ script:
 - cargo test --verbose
 - cargo build --verbose --release
 sudo: false
+before_deploy: "echo $PWD"
 deploy:
   provider: releases
   api_key:
@@ -15,3 +16,5 @@ deploy:
   file: target/release/riemann-cli
   on:
     repo: borntyping/rust-riemann_client
+    rust: stable
+    tags: true
