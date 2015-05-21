@@ -7,14 +7,14 @@ extern crate protobuf;
 
 use std::fmt::Debug;
 use std::io::Write;
-use std::iter::{IntoIterator,FromIterator};
-use std::net::{TcpStream,ToSocketAddrs};
+use std::iter::{IntoIterator, FromIterator};
+use std::net::{TcpStream, ToSocketAddrs};
 
-use protobuf::{Message,CodedInputStream};
+use protobuf::{Message, CodedInputStream};
 
-use self::error::{Error,Result};
+use self::error::{Error, Result};
 use self::hostname::hostname;
-use self::proto::{Event,Msg,Query};
+use self::proto::{Event, Msg, Query};
 
 mod error;
 pub mod proto;
@@ -72,7 +72,9 @@ impl TCPTransport {
         }
     }
 
-    fn send_events<E>(&mut self, events: E) -> Result<Msg> where E: IntoIterator<Item=Event> {
+    fn send_events<E>(&mut self, events: E) -> Result<Msg>
+        where E: IntoIterator<Item = Event>
+    {
         self.send_msg({
             let mut msg = proto::Msg::new();
             msg.set_events(protobuf::RepeatedField::from_iter(events));
@@ -108,7 +110,9 @@ impl Client {
     }
 
     /// Send multiple events, discarding the response if it is not an error.
-    pub fn events<E>(&mut self, events: E) -> Result<()> where E: IntoIterator<Item=Event> {
+    pub fn events<E>(&mut self, events: E) -> Result<()>
+        where E: IntoIterator<Item = Event>
+    {
         self.transport.send_events(events).and_then(|_| Ok(()))
     }
 
