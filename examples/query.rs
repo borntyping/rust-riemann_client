@@ -2,20 +2,11 @@
 
 extern crate riemann_client;
 
+use riemann_client::Client;
+
 fn main() {
-    let addr = ("localhost", 5555);
-    let mut client = riemann_client::Client::connect(&addr).unwrap();
-    let mut query = riemann_client::proto::Query::new();
-    query.set_string("true".to_string());
-
-    let response = client.send_query(query).unwrap();
-
-    // Create a sorted list of events
-    let mut events = Vec::new();
-    events.extend(response.get_events());
-    events.sort_by(|a, b| {
-        a.get_service().cmp(b.get_service())
-    });
+    let mut client = Client::connect(&("localhost", 5555)).unwrap();
+    let events = client.query("true".to_string()).unwrap();
 
     println!(
         "{:<10} {:<10} {:<55} {:<10} {:<10}",

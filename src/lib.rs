@@ -5,7 +5,9 @@ extern crate libc;
 extern crate log;
 extern crate protobuf;
 
+use std::fmt::Debug;
 use std::io::Write;
+use std::iter::{IntoIterator,FromIterator};
 use std::net::{TcpStream,ToSocketAddrs};
 
 use protobuf::{Message,CodedInputStream};
@@ -17,16 +19,19 @@ mod error;
 pub mod proto;
 pub mod utils;
 
-pub struct Client {
+pub struct TCPTransport {
     stream: TcpStream
 }
 
-impl Client {
+impl TCPTransport {
     pub fn connect<A: ToSocketAddrs + ?Sized>(addr: &A) -> Result<Self> {
-        Ok(Client { stream: try!(TcpStream::connect(addr)) })
+        Ok(TCPTransport { stream: try!(TcpStream::connect(addr)) })
     }
+}
 
-    fn send_msg(&mut self, msg: Msg) -> Result<()> {
+impl TCPTransport {
+    fn send_msg(&mut self, msg: Msg) -> Result<Msg> {
+        // Prepare the message for writing.
         let size = msg.compute_size();
         let bytes = try!(msg.write_to_bytes());
 
@@ -44,10 +49,7 @@ impl Client {
         try!(self.stream.write_all(&bytes));
         try!(self.stream.flush());
 
-        return Ok(());
-    }
-
-    fn recv_msg(&mut self) -> Result<Msg> {
+        // CodedInputStream is used for the `read_raw_byte(s)` methods
         let mut input_stream = CodedInputStream::new(&mut self.stream);
 
         // Read the message size as a big-endian 32 bit unsigned integer.
@@ -61,41 +63,71 @@ impl Client {
         let bytes = try!(input_stream.read_raw_bytes(size));
         let msg: Msg = try!(protobuf::parse_from_bytes(&bytes));
 
-        // Check that the messages has set `ok: true`
-        if msg.get_ok() { Ok(msg) } else { Err(Error::from(msg)) }
+        // If the message has set `ok: false`, transform it into an `Err`
+        if msg.get_ok() {
+            Ok(msg)
+        } else {
+            Err(Error::from(msg))
+        }
     }
 
-    fn send_and_recv_msg(&mut self, msg: Msg) -> Result<Msg> {
-        try!(self.send_msg(msg));
-        return self.recv_msg();
+    fn send_events<E>(&mut self, events: E) -> Result<Msg> where E: IntoIterator<Item=Event> {
+        self.send_msg({
+            let mut msg = proto::Msg::new();
+            msg.set_events(protobuf::RepeatedField::from_iter(events));
+            msg
+        })
     }
 
-    pub fn send_event(&mut self, event: Event) -> Result<Msg> {
-        let mut msg = proto::Msg::new();
-        msg.set_events(protobuf::RepeatedField::from_vec(vec![event]));
-        return self.send_and_recv_msg(msg);
-    }
-
-    pub fn send_query(&mut self, query: Query) -> Result<Msg> {
-        let mut msg = proto::Msg::new();
-        msg.set_query(query);
-        return self.send_and_recv_msg(msg);
-    }
-
-    /// Send a query and return a sorted list of events matching the query
-    pub fn query(&mut self, query: String) -> Result<Vec<Event>> {
-        let mut q = Query::new();
-        q.set_string(query);
-        let response = try!(self.send_query(q));
-
-        let mut events = Vec::from(response.get_events());
-        events.sort_by(|a, b| { a.get_service().cmp(b.get_service()) });
-        Ok(events)
+    fn send_query(&mut self, query: Query) -> Result<Msg> {
+        self.send_msg({
+            let mut msg = proto::Msg::new();
+            msg.set_query(query);
+            msg
+        })
     }
 }
 
-impl std::fmt::Debug for Client {
+impl std::fmt::Debug for TCPTransport {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Client {{ addr: {:?} }}", self.stream.peer_addr())
+        write!(f, "TCPTransport {{ addr: {:?} }}", self.stream.peer_addr())
+    }
+}
+
+/// A wrapper providing a nicer interface to TCPTransport.
+#[derive(Debug)]
+pub struct Client {
+    transport: TCPTransport
+}
+
+impl Client {
+    /// Connect to a Riemann server using over TCP.
+    pub fn connect<A: ToSocketAddrs + ?Sized>(addr: &A) -> Result<Self> {
+        Ok(Client { transport: try!(TCPTransport::connect(addr)) })
+    }
+
+    /// Send multiple events, discarding the response if it is not an error.
+    pub fn events<E>(&mut self, events: E) -> Result<()> where E: IntoIterator<Item=Event> {
+        self.transport.send_events(events).and_then(|_| Ok(()))
+    }
+
+    /// Wrapper around `.events()` for sending a single `Event`.
+    pub fn event(&mut self, event: Event) -> Result<()> {
+        self.events(vec![event])
+    }
+
+    /// Send a query and return a sorted list of events matching the query.
+    pub fn query(&mut self, query: String) -> Result<Vec<Event>> {
+        let response = try!(self.transport.send_query({
+            let mut query_msg = Query::new();
+            query_msg.set_string(query);
+            query_msg
+        }));
+
+        Ok({
+            let mut events = Vec::from(response.get_events());
+            events.sort_by(|a, b| { a.get_service().cmp(b.get_service()) });
+            events
+        })
     }
 }
