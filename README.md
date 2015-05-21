@@ -37,6 +37,8 @@ Licence
 
 `riemann_client` is licenced under the [MIT Licence](http://opensource.org/licenses/MIT).
 
+It was also directly inspired by the Python [riemann-client](http://github.com/borntyping/python-riemann-client) by the same author.
+
 Authors
 -------
 
