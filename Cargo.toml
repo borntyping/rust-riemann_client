@@ -6,8 +6,22 @@ authors = ["Sam Clements <sam@borntyping.co.uk>"]
 description = "A Riemann client library"
 repository = "https://github.com/borntyping/rust-riemann_client"
 
+[features]
+default = ["docopt", "rustc-serialize"]
+
 [dependencies]
 log = "^0.3.1"
 libc = "^0.1.8"
 protobuf = "^1.0.0"
 simple_logger = "^0.3.1"
+
+[dependencies.docopt]
+version = "^0.6.60"
+optional = true
+
+[dependencies.rustc-serialize]
+version = "^0.3.14"
+optional = true
+
+[[bin]]
+name = "riemann-cli"
