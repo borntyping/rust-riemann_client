@@ -1,6 +1,8 @@
+//! Wrapper around the hostname function from libc
+
 use std::str;
 use std::iter::repeat;
-use std::io::{Error,Result};
+use std::io::{Error,ErrorKind,Result};
 
 use libc::{c_char,c_int,size_t};
 
@@ -21,7 +23,11 @@ pub fn hostname() -> Result<String> {
     }
 
     let len = buffer.iter().position(|b| *b == 0).unwrap_or(buffer_len);
-    return Ok(str::from_utf8(&buffer[..len]).unwrap().to_string());
+
+    match str::from_utf8(&buffer[..len]) {
+        Ok(s) => Ok(s.to_string()),
+        Err(e) => Err(Error::new(ErrorKind::Other, e))
+    }
 }
 
 #[cfg(test)]

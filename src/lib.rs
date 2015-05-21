@@ -13,11 +13,12 @@ use std::net::{TcpStream,ToSocketAddrs};
 use protobuf::{Message,CodedInputStream};
 
 use self::error::{Error,Result};
+use self::hostname::hostname;
 use self::proto::{Event,Msg,Query};
 
 mod error;
 pub mod proto;
-pub mod utils;
+pub mod hostname;
 
 pub struct TCPTransport {
     stream: TcpStream
