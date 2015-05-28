@@ -3,6 +3,7 @@
 //! Requires the optional dependencies (`docopt` and `rustc_serialize`) that are
 //! included by the default feature.
 
+#![cfg(not(test))]
 #![cfg(feature = "default")]
 
 extern crate docopt;

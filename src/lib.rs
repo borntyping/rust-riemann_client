@@ -7,7 +7,69 @@ extern crate protobuf;
 pub mod proto;
 pub mod transport;
 pub mod client;
-pub mod error;
 
 pub use self::client::{Client};
-pub use self::error::{Error, Result};
+pub use self::utils::{Error, Result};
+
+/// Error and From implementations
+mod utils {
+    use std::error::Error as ErrorTrait;
+    use std::fmt::{Display, Formatter};
+    use std::io::Error as IoError;
+
+    use ::protobuf::error::ProtobufError;
+
+    use super::proto::Query;
+
+    impl<'a> From<&'a str> for Query {
+        fn from(query_str: &'a str) -> Self {
+            Query::from(query_str.to_string())
+        }
+    }
+
+    impl From<String> for Query {
+        fn from(string: String) -> Self {
+            let mut query = Query::new();
+            query.set_string(string);
+            query
+        }
+    }
+
+    #[derive(Debug)]
+    pub enum Error {
+        Io(::std::io::Error),
+        Protobuf(ProtobufError),
+        Riemann(String)
+    }
+
+    impl Display for Error {
+        fn fmt(&self, f: &mut Formatter) -> ::std::fmt::Result {
+            write!(f, "{}", self.description())
+        }
+    }
+
+    impl ErrorTrait for Error {
+        fn description<'a>(&'a self) -> &'a str {
+            match *self {
+                Error::Io(ref e) => e.description(),
+                Error::Protobuf(ref e) => e.description(),
+                Error::Riemann(ref s) => s
+            }
+        }
+    }
+
+    impl From<IoError> for Error {
+        fn from(err: IoError) -> Self {
+            Error::Io(err)
+        }
+    }
+
+    impl From<ProtobufError> for Error {
+        fn from(err: ProtobufError) -> Self {
+            Error::Protobuf(err)
+        }
+    }
+
+    /// Result alias for Riemann client errors
+    pub type Result<T> = ::std::result::Result<T, Error>;
+}

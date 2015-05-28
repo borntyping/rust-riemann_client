@@ -34,12 +34,8 @@ impl Client {
     }
 
     /// Send a query and return a sorted list of events matching the query.
-    pub fn query(&mut self, query: String) -> Result<Vec<Event>> {
-        let response = try!(self.transport.send_query({
-            let mut query_msg = Query::new();
-            query_msg.set_string(query);
-            query_msg
-        }));
+    pub fn query<T: Into<Query>>(&mut self, query: T) -> Result<Vec<Event>> {
+        let response = try!(self.transport.send_query(query.into()));
 
         Ok({
             let mut events = Vec::from(response.get_events());

@@ -6,7 +6,7 @@ use std::net::{TcpStream, ToSocketAddrs};
 
 use ::protobuf::{Message, CodedInputStream, parse_from_bytes};
 
-use super::error::{Error, Result};
+use super::utils::{Error, Result};
 use super::proto::{Event, Msg, Query};
 
 pub struct TCPTransport {
