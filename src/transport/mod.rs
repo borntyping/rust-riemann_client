@@ -1,7 +1,6 @@
 //! Layer two: Protobuf transport over TCP.
 
 use std::io::Write;
-use std::iter::{IntoIterator, FromIterator};
 use std::net::{TcpStream, ToSocketAddrs};
 
 use ::protobuf::{Message, CodedInputStream, parse_from_bytes};
@@ -59,12 +58,10 @@ impl TCPTransport {
         }
     }
 
-    pub fn send_events<E>(&mut self, events: E) -> Result<Msg>
-        where E: IntoIterator<Item = Event>
-    {
+    pub fn send_events(&mut self, events: Vec<Event>) -> Result<Msg> {
         self.send_msg({
             let mut msg = Msg::new();
-            msg.set_events(::protobuf::RepeatedField::from_iter(events));
+            msg.set_events(::protobuf::RepeatedField::from_vec(events));
             msg
         })
     }

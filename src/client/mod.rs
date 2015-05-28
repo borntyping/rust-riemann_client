@@ -1,18 +1,34 @@
 //! Layer three: An abstract client hiding the TCP/Protobuf layers.
 
-use std::iter::IntoIterator;
 use std::net::ToSocketAddrs;
 
 use super::Result;
 use super::proto::{Event, Query};
 use super::transport::TCPTransport;
 
-// TODO: Enable and use this
-// mod hostname;
+mod hostname;
+
+/// Adds a `set_defaults()` method to `Event`
+trait SetDefaults {
+    fn set_defaults(&mut self) -> Result<()>;
+}
+
+impl SetDefaults for Event {
+    /// Sets a host and service for the event if they are not set
+    fn set_defaults(&mut self) -> Result<()> {
+        if !self.has_host() {
+            self.set_host(try!(hostname::hostname()))
+        }
+        if !self.has_service() {
+            self.set_service("riemann_client".to_string())
+        }
+        Ok(())
+    }
+}
 
 #[derive(Debug)]
 pub struct Client {
-    transport: TCPTransport
+    pub transport: TCPTransport
 }
 
 impl Client {
@@ -22,10 +38,17 @@ impl Client {
     }
 
     /// Send multiple events, discarding the response if it is not an error.
-    pub fn events<E>(&mut self, events: E) -> Result<()>
-        where E: IntoIterator<Item = Event>
-    {
-        self.transport.send_events(events).and_then(|_| Ok(()))
+    pub fn events(&mut self, mut events: Vec<Event>) -> Result<()> {
+        // Modify each event in the vector in place
+        for event in events.iter_mut() {
+            try!(event.set_defaults());
+        }
+
+        // Send all events in the same message
+        try!(self.transport.send_events(events));
+
+        // A successful response is discarded as it contains no useful information
+        return Ok(());
     }
 
     /// Wrapper around `.events()` for sending a single `Event`.
@@ -42,5 +65,32 @@ impl Client {
             events.sort_by(|a, b| { a.get_service().cmp(b.get_service()) });
             events
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::super::proto::Event;
+    use super::SetDefaults;
+    use super::hostname::hostname;
+
+    #[test]
+    fn event_defaults() {
+        let mut event = Event::new();
+        event.set_defaults().unwrap();
+
+        assert_eq!(event.get_service(), "riemann_client".to_string());
+        assert_eq!(event.get_host(), hostname().unwrap());
+    }
+
+    #[test]
+    fn event_no_defaults() {
+        let mut event = Event::new();
+        event.set_service("test".to_string());
+        event.set_host("test".to_string());
+        event.set_defaults().unwrap();
+
+        assert_eq!(event.get_service(), "test".to_string());
+        assert_eq!(event.get_host(), "test".to_string());
     }
 }

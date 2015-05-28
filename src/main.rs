@@ -24,7 +24,7 @@ Event options:
     -T, --time <i64>            Event timestamp (unix format).
     -S, --state <str>           Event state.
     -s, --service <str>         Event service [default: riemann-cli].
-    -N, --host <str>            Event hostname.
+    -N, --host <str>            Event hostname (defaults to current hostname).
     -d, --description <str>     Event description.
     -t, --tag <str>             Event tags (can be used multiple times).
     -l, --ttl <f32>             Event time to live (seconds).
