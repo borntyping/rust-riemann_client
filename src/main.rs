@@ -27,11 +27,11 @@ Event options:
     -N, --host <str>            Event hostname (defaults to current hostname).
     -d, --description <str>     Event description.
     -t, --tag <str>             Event tags (can be used multiple times).
-    -l, --ttl <f32>             Event time to live (seconds).
-    -a, --attribute <str=str>   Event attributes (key=value, multiple times).
-    -i, --metric-sint64 <i64>   Event metric as an integer (metric_sint64).
-    -m, --metric-d <f64>        Event metric as a double (metric_d).
-    -f, --metric-f <f32>        Event metric as a float (metric_f).
+    -l, --ttl <f32>             Event time to live (in seconds).
+    -a, --attribute <str=str>   Event attributes (key=value pairs, can be used multiple times).
+    -i, --metric-sint64 <i64>   Event metric as an integer (using the metric_sint64 field).
+    -m, --metric-d <f64>        Event metric as a double (using the metric_d field).
+    -f, --metric-f <f32>        Event metric as a float (using the metric_f field).
 ";
 
 #[derive(RustcDecodable, Debug)]
