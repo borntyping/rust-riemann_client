@@ -21,5 +21,10 @@ optional = true
 version = "^0.3.14"
 optional = true
 
+[lib]
+name = "riemann_client"
+doctest = false
+
 [[bin]]
 name = "riemann-cli"
+test = false

@@ -9,6 +9,7 @@ extern {
     pub fn gethostname(name: *mut c_char, size: size_t) -> c_int;
 }
 
+/// Calls `gethostname`
 pub fn hostname() -> Result<String> {
     // Create a buffer for the hostname to be copied into
     let buffer_len: usize = 255;
@@ -31,9 +32,7 @@ pub fn hostname() -> Result<String> {
 }
 
 #[cfg(test)]
-mod test {
-    #[test]
-    fn hostname() {
-        super::hostname().unwrap();
-    }
+#[test]
+fn test_hostname() {
+    hostname().unwrap();
 }
