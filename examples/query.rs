@@ -6,7 +6,7 @@ use riemann_client::Client;
 
 fn main() {
     let mut client = Client::connect(&("localhost", 5555)).unwrap();
-    let events = client.query("true".to_string()).unwrap();
+    let events = client.query("true").unwrap();
 
     println!(
         "{:<10} {:<10} {:<55} {:<10} {:<10}",
