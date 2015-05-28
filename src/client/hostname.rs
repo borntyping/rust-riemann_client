@@ -1,6 +1,5 @@
 //! Wrapper around the hostname function from libc
 
-use std::str;
 use std::iter::repeat;
 use std::io::{Error,ErrorKind,Result};
 
@@ -11,23 +10,24 @@ extern {
 }
 
 pub fn hostname() -> Result<String> {
+    // Create a buffer for the hostname to be copied into
     let buffer_len: usize = 255;
     let mut buffer: Vec<u8> = repeat(0).take(buffer_len).collect();
 
     let error = unsafe {
-        gethostname (buffer.as_mut_ptr() as *mut c_char, buffer_len as size_t)
+        gethostname(buffer.as_mut_ptr() as *mut c_char, buffer_len as size_t)
     };
 
     if error != 0 {
         return Err(Error::last_os_error());
     }
 
+    // Find the end of the string and truncate the vector to that length
     let len = buffer.iter().position(|b| *b == 0).unwrap_or(buffer_len);
+    buffer.truncate(len);
 
-    match str::from_utf8(&buffer[..len]) {
-        Ok(s) => Ok(s.to_string()),
-        Err(e) => Err(Error::new(ErrorKind::Other, e))
-    }
+    // Create an owned string from the buffer, transforming UTF-8 errors into IO errors
+    String::from_utf8(buffer).map_err(|e| Error::new(ErrorKind::Other, e))
 }
 
 #[cfg(test)]
