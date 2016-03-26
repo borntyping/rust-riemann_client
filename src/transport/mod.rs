@@ -2,6 +2,7 @@
 
 use std::io::Write;
 use std::net::{TcpStream, ToSocketAddrs};
+use std::time::Duration;
 
 use ::protobuf::{Message, CodedInputStream, parse_from_bytes};
 
@@ -15,6 +16,12 @@ pub struct TCPTransport {
 impl TCPTransport {
     pub fn connect<A: ToSocketAddrs + ?Sized>(addr: &A) -> Result<Self> {
         Ok(TCPTransport { stream: try!(TcpStream::connect(addr)) })
+    }
+
+    pub fn set_timeout(&mut self, timeout: Option<Duration>) -> Result<()>{
+        try!(self.stream.set_write_timeout(timeout));
+        try!(self.stream.set_read_timeout(timeout));
+        Ok(())
     }
 
     pub fn send_msg(&mut self, msg: Msg) -> Result<Msg> {
