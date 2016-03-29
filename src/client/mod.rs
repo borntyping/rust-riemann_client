@@ -1,6 +1,7 @@
 //! Layer three: An abstract client hiding the TCP/Protobuf layers.
 
 use std::net::ToSocketAddrs;
+use std::time::Duration;
 
 use super::Result;
 use super::proto::{Event, Query};
@@ -35,6 +36,11 @@ impl Client {
     /// Connect to a Riemann server using over TCP.
     pub fn connect<A: ToSocketAddrs + ?Sized>(addr: &A) -> Result<Self> {
         Ok(Client { transport: try!(TCPTransport::connect(addr)) })
+    }
+
+    /// Set a read and write timeout for the underlying socket
+    pub fn set_timeout(&mut self, timeout: Option<Duration>) -> Result<()>{
+        self.transport.set_timeout(timeout)
     }
 
     /// Send multiple events, discarding the response if it is not an error.
