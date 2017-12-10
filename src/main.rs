@@ -47,7 +47,7 @@ struct Args {
     flag_description: Option<String>,
     flag_tag: Vec<String>,
     flag_ttl: Option<f32>,
-    flag_attribute: Vec<String>,
+    flag_attribute: Option<String>,
     flag_metric_sint64: Option<i64>,
     flag_metric_d: Option<f64>,
     flag_metric_f: Option<f32>,
@@ -59,6 +59,8 @@ struct Args {
 }
 
 fn main() {
+    use riemann_client::proto::Attribute;
+
     let args: Args = docopt::Docopt::new(USAGE)
         .and_then(|d| d.decode())
         .unwrap_or_else(|e| e.exit());
@@ -88,8 +90,18 @@ fn main() {
             event.set_tags(protobuf::RepeatedField::from_vec(args.flag_tag));
         }
 
-        if !args.flag_attribute.is_empty() {
-            unimplemented!();
+        if let Some(x) = args.flag_attribute {
+            let mut vec_attr: Vec<Attribute> = Vec::new();
+            let mut args_attr = x;
+            let mut args_attr_split = args_attr.split(',');
+            for attr in args_attr_split {
+                let mut res: Vec<String> = attr.split("=").map(|s| s.to_string()).collect();
+                let mut at = Attribute::new();
+                if let Some(x) = res.pop() { at.set_value(x) };
+                if let Some(x) = res.pop() { at.set_key(x) };
+                vec_attr.push(at);
+            }
+            event.set_attributes(protobuf::RepeatedField::from_vec(vec_attr));
         }
 
         println!("--> {{ {:?} }}", event);
