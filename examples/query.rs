@@ -1,7 +1,5 @@
 //! Prints all events from the index
 
-extern crate riemann_client;
-
 use riemann_client::Client;
 
 fn main() {
@@ -10,10 +8,12 @@ fn main() {
 
     println!(
         "{:<10} {:<10} {:<55} {:<10} {:<10}",
-        "HOSTNAME", "TIME", "SERVICE", "METRIC", "STATE");
+        "HOSTNAME", "TIME", "SERVICE", "METRIC", "STATE"
+    );
 
     for event in events {
-        println!("{:<10} {:<10} {:<55} {:<10} {:<10}",
+        println!(
+            "{:<10} {:<10} {:<55} {:<10} {:<10}",
             event.get_host(),
             event.get_time(),
             event.get_service(),

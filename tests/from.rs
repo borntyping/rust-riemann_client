@@ -1,5 +1,3 @@
-extern crate riemann_client;
-
 use riemann_client::proto::Query;
 
 #[test]
