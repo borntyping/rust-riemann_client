@@ -5,7 +5,8 @@ edition = "2018"
 license = "MIT"
 name = "riemann_client"
 repository = "https://github.com/borntyping/rust-riemann_client"
-version = "0.7.0"
+version = "0.8.0"
+
 [[bin]]
 name = "riemann-cli"
 path = "src/main.rs"
