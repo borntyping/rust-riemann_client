@@ -1,6 +1,6 @@
 //! A command line interface to [Riemann](http://riemann.io/).
 //!
-//! Requires the optional dependencies (`docopt` and `rustc_serialize`) that are
+//! Requires the optional dependencies (`docopt` and `serde`) that are
 //! included by the default feature.
 
 #![cfg(not(test))]
@@ -10,13 +10,18 @@ use docopt::Docopt;
 use serde::Deserialize;
 
 static USAGE: &str = "
-Usage: riemann_cli [-HP] send [options]
-       riemann_cli [-HP] query <query>
+Usage: riemann_cli [-H <host> -P <port>] [--mtls --cafile <file> --cert <file> --key <file>] send [options]
+       riemann_cli [-H <host> -P <port>] [--mtls --cafile <file> --cert <file> --key <file>] query <query>
        riemann_cli --help | --version
 
 Server options:
     -H, --server-host <host>    Riemann server hostname [default: localhost].
     -P, --server-port <port>    Riemann server port [default: 5555].
+    --mtls                      Connect to Riemann server using mTLS.
+    --cafile <file>             CA certificate filename.
+    --cert <file>               Client certificate filename.
+    --key <file>                Client key certificate filename.
+
 
 Event options:
     -T, --time <i64>            Event timestamp (unix format).
@@ -36,6 +41,10 @@ Event options:
 struct Args {
     flag_server_host: String,
     flag_server_port: u16,
+    flag_mtls: Option<bool>,
+    flag_cafile: Option<String>,
+    flag_cert: Option<String>,
+    flag_key: Option<String>,
 
     cmd_send: bool,
     flag_time: Option<i64>,
@@ -68,8 +77,26 @@ fn main() {
         return;
     }
 
-    let addr: (&str, u16) = (&args.flag_server_host, args.flag_server_port);
-    let mut client = riemann_client::Client::connect(&addr).unwrap();
+    if args.flag_mtls.is_some()
+        && (args.flag_cafile.is_none() || args.flag_cert.is_none() || args.flag_key.is_none())
+    {
+        panic!("Args '--cafile', '--cert', '--key' are required using mTLS option.")
+    }
+
+    let mut client = match args.flag_mtls {
+        Some(_) => riemann_client::Client::connect_tls(
+            &args.flag_server_host,
+            args.flag_server_port,
+            &args.flag_cafile.unwrap(),
+            &args.flag_cert.unwrap(),
+            &args.flag_key.unwrap(),
+        )
+        .unwrap(),
+        None => {
+            let addr: (&str, u16) = (&args.flag_server_host, args.flag_server_port);
+            riemann_client::Client::connect(&addr).unwrap()
+        }
+    };
 
     if args.cmd_send {
         let mut event = riemann_client::proto::Event::new();

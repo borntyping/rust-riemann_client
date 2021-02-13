@@ -33,10 +33,23 @@ pub struct Client {
 }
 
 impl Client {
-    /// Connect to a Riemann server using over TCP.
+    /// Connect to a Riemann server using raw TCP.
     pub fn connect<A: ToSocketAddrs + ?Sized>(addr: &A) -> Result<Self> {
         Ok(Client {
             transport: TCPTransport::connect(addr)?,
+        })
+    }
+
+    /// Connect to a Riemann server using mTLS over TCP.
+    pub fn connect_tls(
+        hostname: &str,
+        port: u16,
+        ca_file: &str,
+        cert_file: &str,
+        key_file: &str,
+    ) -> Result<Self> {
+        Ok(Client {
+            transport: TCPTransport::connect_tls(hostname, port, ca_file, cert_file, key_file)?,
         })
     }
 

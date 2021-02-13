@@ -36,6 +36,11 @@ mod utils {
         Io(::std::io::Error),
         Protobuf(ProtobufError),
         Riemann(String),
+        Cert(webpki::Error),
+        CACert(String),
+        Key(String),
+        TLS(rustls::TLSError),
+        InvalidDNSNameError(webpki::InvalidDNSNameError),
     }
 
     impl Display for Error {
@@ -53,6 +58,24 @@ mod utils {
     impl From<ProtobufError> for Error {
         fn from(err: ProtobufError) -> Self {
             Error::Protobuf(err)
+        }
+    }
+
+    impl From<webpki::Error> for Error {
+        fn from(err: webpki::Error) -> Self {
+            Error::Cert(err)
+        }
+    }
+
+    impl From<rustls::TLSError> for Error {
+        fn from(err: rustls::TLSError) -> Self {
+            Error::TLS(err)
+        }
+    }
+
+    impl From<webpki::InvalidDNSNameError> for Error {
+        fn from(err: webpki::InvalidDNSNameError) -> Self {
+            Error::InvalidDNSNameError(err)
         }
     }
 
