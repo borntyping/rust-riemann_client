@@ -2,3 +2,4 @@ target
 Cargo.lock
 test_riemann_cli.sh
 *riemann.log
+.direnv
