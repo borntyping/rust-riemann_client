@@ -3,11 +3,9 @@
 use std::net::ToSocketAddrs;
 use std::time::Duration;
 
-use super::proto::{Event, Query};
+use super::proto::{Event, Msg, Query};
 use super::transport::TCPTransport;
 use super::Result;
-
-mod hostname;
 
 /// Adds a `set_defaults()` method to `Event`
 trait SetDefaults {
@@ -18,7 +16,7 @@ impl SetDefaults for Event {
     /// Sets a host and service for the event if they are not set
     fn set_defaults(&mut self) -> Result<()> {
         if !self.has_host() {
-            self.set_host(hostname::hostname()?)
+            self.set_host(gethostname::gethostname().into_string()?);
         }
         if !self.has_service() {
             self.set_service("riemann_client".to_string())
@@ -49,7 +47,13 @@ impl Client {
         key_file: &str,
     ) -> Result<Self> {
         Ok(Client {
-            transport: TCPTransport::connect_tls(hostname, port, ca_file, cert_file, key_file)?,
+            transport: TCPTransport::connect_tls(
+                hostname.to_owned(),
+                port,
+                ca_file,
+                cert_file,
+                key_file,
+            )?,
         })
     }
 
@@ -59,21 +63,21 @@ impl Client {
     }
 
     /// Send multiple events, discarding the response if it is not an error.
-    pub fn events(&mut self, mut events: Vec<Event>) -> Result<()> {
+    pub fn events(&mut self, mut events: Vec<Event>) -> Result<Msg> {
         // Modify each event in the vector in place
         for event in events.iter_mut() {
             event.set_defaults()?;
         }
 
         // Send all events in the same message
-        self.transport.send_events(events)?;
+        let msg = self.transport.send_events(events)?;
 
         // A successful response is discarded as it contains no useful information
-        Ok(())
+        Ok(msg)
     }
 
     /// Wrapper around `.events()` for sending a single `Event`.
-    pub fn event(&mut self, event: Event) -> Result<()> {
+    pub fn event(&mut self, event: Event) -> Result<Msg> {
         self.events(vec![event])
     }
 
@@ -82,8 +86,8 @@ impl Client {
         let response = self.transport.send_query(query.into())?;
 
         Ok({
-            let mut events = Vec::from(response.get_events());
-            events.sort_by(|a, b| a.get_service().cmp(b.get_service()));
+            let mut events = response.events;
+            events.sort_by(|a, b| a.service.cmp(&b.service));
             events
         })
     }
@@ -92,7 +96,6 @@ impl Client {
 #[cfg(test)]
 mod test {
     use super::super::proto::Event;
-    use super::hostname::hostname;
     use super::SetDefaults;
 
     #[test]
@@ -100,18 +103,20 @@ mod test {
         let mut event = Event::new();
         event.set_defaults().unwrap();
 
-        assert_eq!(event.get_service(), "riemann_client".to_string());
-        assert_eq!(event.get_host(), hostname().unwrap());
+        assert_eq!(event.service, Some("riemann_client".to_string()));
+        assert_eq!(
+            event.host,
+            Some(gethostname::gethostname().into_string().unwrap())
+        );
     }
 
     #[test]
     fn event_no_defaults() {
         let mut event = Event::new();
-        event.set_service("test".to_string());
-        event.set_host("test".to_string());
-        event.set_defaults().unwrap();
+        event.service = Some("test".to_string());
+        event.host = Some("test".to_string());
 
-        assert_eq!(event.get_service(), "test".to_string());
-        assert_eq!(event.get_host(), "test".to_string());
+        assert_eq!(event.service, Some("test".to_string()));
+        assert_eq!(event.host, Some("test".to_string()));
     }
 }

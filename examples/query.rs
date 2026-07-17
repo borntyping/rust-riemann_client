@@ -14,11 +14,11 @@ fn main() {
     for event in events {
         println!(
             "{:<10} {:<10} {:<55} {:<10} {:<10}",
-            event.get_host(),
-            event.get_time(),
-            event.get_service(),
-            event.get_metric_f(),
-            event.get_state()
+            event.host(),
+            event.time(),
+            event.service(),
+            event.metric_f(),
+            event.state()
         );
     }
 }

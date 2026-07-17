@@ -130,7 +130,7 @@ fn main() {
         }
 
         if !args.flag_tag.is_empty() {
-            event.set_tags(protobuf::RepeatedField::from_vec(args.flag_tag));
+            event.tags = args.flag_tag;
         }
 
         if let Some(x) = args.flag_attribute {
@@ -148,7 +148,7 @@ fn main() {
                 };
                 vec_attr.push(at);
             }
-            event.set_attributes(protobuf::RepeatedField::from_vec(vec_attr));
+            event.attributes = vec_attr;
         }
 
         println!("--> {{ {:?} }}", event);
@@ -165,11 +165,11 @@ fn main() {
         for event in events {
             println!(
                 "{:<10} {:<10} {:<55} {:<10} {:<10}",
-                event.get_host(),
-                event.get_time(),
-                event.get_service(),
-                event.get_metric_f(),
-                event.get_state()
+                event.host(),
+                event.time(),
+                event.service(),
+                event.metric_f(),
+                event.state()
             );
         }
     }

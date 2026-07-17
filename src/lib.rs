@@ -10,10 +10,11 @@ pub use self::utils::{Error, Result};
 
 /// Error and From implementations
 mod utils {
+    use std::ffi::OsString;
     use std::fmt::{Display, Formatter};
     use std::io::Error as IoError;
 
-    use ::protobuf::error::ProtobufError;
+    use ::protobuf::Error as ProtobufError;
 
     use super::proto::Query;
 
@@ -36,16 +37,17 @@ mod utils {
         Io(::std::io::Error),
         Protobuf(ProtobufError),
         Riemann(String),
-        Cert(webpki::Error),
         CACert(String),
         Key(String),
-        TLS(rustls::TLSError),
-        InvalidDNSNameError(webpki::InvalidDNSNameError),
+        PemParse(rustls::pki_types::pem::Error),
+        TLS(rustls::Error),
+        InvalidDNSNameError(rustls::pki_types::InvalidDnsNameError),
+        InvalidHostname(OsString),
     }
 
     impl Display for Error {
         fn fmt(&self, f: &mut Formatter) -> ::std::fmt::Result {
-            write!(f, "{}", self)
+            write!(f, "{:?}", self)
         }
     }
 
@@ -61,21 +63,27 @@ mod utils {
         }
     }
 
-    impl From<webpki::Error> for Error {
-        fn from(err: webpki::Error) -> Self {
-            Error::Cert(err)
+    impl From<rustls::pki_types::pem::Error> for Error {
+        fn from(err: rustls::pki_types::pem::Error) -> Self {
+            Error::PemParse(err)
         }
     }
 
-    impl From<rustls::TLSError> for Error {
-        fn from(err: rustls::TLSError) -> Self {
+    impl From<rustls::Error> for Error {
+        fn from(err: rustls::Error) -> Self {
             Error::TLS(err)
         }
     }
 
-    impl From<webpki::InvalidDNSNameError> for Error {
-        fn from(err: webpki::InvalidDNSNameError) -> Self {
+    impl From<rustls::pki_types::InvalidDnsNameError> for Error {
+        fn from(err: rustls::pki_types::InvalidDnsNameError) -> Self {
             Error::InvalidDNSNameError(err)
+        }
+    }
+
+    impl From<OsString> for Error {
+        fn from(err: OsString) -> Self {
+            Error::InvalidHostname(err)
         }
     }
 

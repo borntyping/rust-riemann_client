@@ -7,9 +7,9 @@ fn main() {
     client
         .event({
             let mut event = Event::new();
-            event.set_service("rust-riemann_client".to_string());
-            event.set_state("ok".to_string());
-            event.set_metric_d(128.128);
+            event.service = Some("rust-riemann_client".to_string());
+            event.state = Some("ok".to_string());
+            event.metric_d = Some(128.128);
             event
         })
         .unwrap();
